@@ -39,7 +39,7 @@ namespace PSReptile.Tests
                     .Select(typeInfo => typeInfo.AsType())
                     .ToArray();
 
-            Assert.Equal(1, cmdletTypes.Length);
+            Assert.Single(cmdletTypes);
         }
     }
 }

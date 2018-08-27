@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.0</TargetFramework>
+    <TargetFramework>netstandard2.0</TargetFramework>
 
     <IsPackable>false</IsPackable>
   </PropertyGroup>
@@ -9,9 +9,6 @@
 
   <ItemGroup>
     <ProjectReference Include="../PSReptile/PSReptile.csproj"/>
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Microsoft.PowerShell.SDK" Version="6.0.0-rc.2"/>
+    <PackageReference Include="PowerShellStandard.Library" Version="5.1.0-preview-06" />
   </ItemGroup>
 </Project>
