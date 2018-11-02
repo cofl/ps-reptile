@@ -23,11 +23,20 @@ namespace PSReptile.SampleModule
         public string Name { get; set; }
 
         /// <summary>
+        ///     The title of the person to greet, without a period after it.
+        /// </summary>
+        [Parameter(ValueFromRemainingArguments = true, ValueFromPipelineByPropertyName = true, HelpMessage = "Title of the person to greet, sans period.")]
+        public string Title { get; set; }
+
+        /// <summary>
         ///     Perform Cmdlet processing.
         /// </summary>
         protected override void ProcessRecord()
         {
-            WriteObject($"Hello, {Name}!");
+            if(string.IsNullOrEmpty(Title))
+                WriteObject($"Hello, {Name}!");
+            else
+                WriteObject($"Hello, {Title} {Name}!");
         }
     }
 }

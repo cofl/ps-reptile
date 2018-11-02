@@ -64,6 +64,13 @@ namespace PSReptile.Tests
         </maml:description>
         <command:parameterValue required=""true"" variableLength=""false"">String</command:parameterValue>
       </command:parameter>
+      <command:parameter required=""false"" globbing=""false"" pipelineInput=""true (ByPropertyName, FromRemainingArguments)"" position=""named"">
+        <maml:name>Title</maml:name>
+        <maml:description>
+          <maml:para>Title of the person to greet, sans period.</maml:para>
+        </maml:description>
+        <command:parameterValue required=""false"" variableLength=""false"">String</command:parameterValue>
+      </command:parameter>
     </command:syntaxItem>
   </command:syntax>
   <command:parameters>
@@ -73,6 +80,13 @@ namespace PSReptile.Tests
         <maml:para>The name of the person to greet</maml:para>
       </maml:description>
       <command:parameterValue required=""true"" variableLength=""false"">String</command:parameterValue>
+    </command:parameter>
+    <command:parameter required=""false"" globbing=""false"" pipelineInput=""true (ByPropertyName, FromRemainingArguments)"" position=""named"">
+      <maml:name>Title</maml:name>
+      <maml:description>
+        <maml:para>Title of the person to greet, sans period.</maml:para>
+      </maml:description>
+      <command:parameterValue required=""false"" variableLength=""false"">String</command:parameterValue>
     </command:parameter>
   </command:parameters>
   <command:inputTypes />
@@ -96,7 +110,7 @@ namespace PSReptile.Tests
 
                 actual = writer.ToString();
             }
-
+            
             Assert.Equal(expected, actual);
         }
 
