@@ -35,9 +35,13 @@ namespace PSReptile.Maml
             if (writer == null)
                 throw new ArgumentNullException(nameof(writer));
 
-            new XmlSerializer(GetType()).Serialize(
-                writer, this, Constants.XmlNamespace.GetStandardPrefixes()
-            );
+            var settings = new XmlWriterSettings
+            {
+                NewLineChars = "\n"
+            };
+
+            using(var xmlWriter = XmlWriter.Create(writer, settings))
+                WriteTo(xmlWriter);
         }
 
         /// <summary>

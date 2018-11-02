@@ -89,7 +89,7 @@ namespace PSReptile.Tests
             XmlSerializer serializer = new XmlSerializer(typeof(Command));
 
             string actual;
-            using (StringWriter writer = new StringWriter())
+            using (StringWriter writer = new StringWriter { NewLine = "\n" })
             {
                 serializer.Serialize(writer, cmdletHelp, namespaces: namespacesWithPrefix);
                 writer.Flush();
@@ -153,7 +153,7 @@ namespace PSReptile.Tests
             XmlSerializer serializer = new XmlSerializer(typeof(Command));
 
             string actual;
-            using (StringWriter writer = new StringWriter())
+            using (StringWriter writer = new StringWriter { NewLine = "\n" })
             {
                 Parameter nameParameter = new Parameter
                 {

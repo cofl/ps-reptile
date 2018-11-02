@@ -254,16 +254,11 @@ namespace PSReptile
             if (text == null)
                 text = String.Empty;
 
-            return new List<string>(
-                text.Split(
-                    separator: new[] {
-                        Environment.NewLine
-                    },
-                    options: StringSplitOptions.None
-                ).Select(
-                    line => line.Trim()
-                )
-            );
+            return text.Split(
+                        separator: new[] { "\r\n", "\n" },
+                        options: StringSplitOptions.None
+                    ).Select(line => line.Trim())
+                    .ToList();
         }
     }
 }
