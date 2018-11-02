@@ -43,9 +43,6 @@ namespace PSReptile.Maml
         /// <summary>
         ///     Can the parameter accept its value from the pipeline?
         /// </summary>
-        /// <remarks>
-        ///     Either "true (ByValue)", "true (ByPropertyName)", or "false".
-        /// </remarks>
         [XmlAttribute("pipelineInput")]
         public PipelineInputType SupportsPipelineInput { get; set; }
 

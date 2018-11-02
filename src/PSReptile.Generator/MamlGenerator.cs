@@ -138,7 +138,10 @@ namespace PSReptile
                             property.PropertyType.FullName,
                     },
                     IsMandatory = parameterAttribute.Mandatory,
-                    SupportsGlobbing = property.GetCustomAttribute<SupportsWildcardsAttribute>() != null
+                    SupportsGlobbing = property.GetCustomAttribute<SupportsWildcardsAttribute>() != null,
+                    SupportsPipelineInput = (parameterAttribute.ValueFromPipeline ? PipelineInputType.ByValue : PipelineInputType.None)
+                                            | (parameterAttribute.ValueFromPipelineByPropertyName ? PipelineInputType.ByPropertyName : PipelineInputType.None)
+                                            | (parameterAttribute.ValueFromRemainingArguments ? PipelineInputType.FromRemainingArguments : PipelineInputType.None)
                 };
                 commandHelp.Parameters.Add(parameter);
 
