@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Management.Automation;
 using System.Reflection;
+using PSReptile.Maml;
 
 namespace PSReptile.Extractors
 {
@@ -79,6 +81,41 @@ namespace PSReptile.Extractors
             // TODO: Handle resource-based messages (with locale).
 
             return descriptionAttribute.HelpMessage?.Trim();
+        }
+
+        /// <summary>
+        ///     Extract the examples for a Cmdlet parameter.
+        /// </summary>
+        /// <param name="cmdletType">
+        ///     The CLR type that implements the Cmdlet.
+        /// </param>
+        /// <returns>
+        ///     A list of example, which may be empty.
+        /// </returns>
+        public List<CommandExample> GetCmdletExamples(TypeInfo cmdletType)
+        {
+            if (cmdletType == null)
+                throw new ArgumentNullException(nameof(cmdletType));
+            
+            var attributes = cmdletType.GetCustomAttributes<CmdletExampleAttribute>();
+            if (attributes == null)
+                return null;
+            
+            var examples = new List<CommandExample>();
+            foreach (var attribute in attributes)
+            {
+                examples.Add(
+                    new CommandExample
+                    {
+                        Title = attribute.Title,
+                        Description = MamlGenerator.ToParagraphs(attribute.Description),
+                        Code = attribute.Code,
+                        Remarks = MamlGenerator.ToParagraphs(attribute.Remarks)
+                    }
+                );
+            }
+
+            return examples;
         }
     }
 }

@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using System.Reflection;
+using PSReptile.Maml;
 
 namespace PSReptile.Extractors
 {
@@ -45,5 +47,16 @@ namespace PSReptile.Extractors
         ///     An empty string means a description was extracted, but the description is empty (this is legal).
         /// </returns>
         string GetParameterDescription(PropertyInfo parameterDescription);
+
+        /// <summary>
+        ///     Extract the examples for a Cmdlet parameter.
+        /// </summary>
+        /// <param name="cmdletType">
+        ///     The CLR type that implements the Cmdlet.
+        /// </param>
+        /// <returns>
+        ///     A list of example, which may be empty.
+        /// </returns>
+        List<CommandExample> GetCmdletExamples(TypeInfo cmdletType);
     }
 }

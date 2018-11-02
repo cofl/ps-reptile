@@ -168,6 +168,8 @@ namespace PSReptile
                 );
             }
 
+            commandHelp.Examples.AddRange(GetCmdletExamples(cmdletTypeInfo).OrderBy(example => example.Title));
+
             return commandHelp;
         }
 
@@ -243,6 +245,21 @@ namespace PSReptile
             return null;
         }
 
+        List<CommandExample> GetCmdletExamples(TypeInfo cmdletType)
+        {
+            if(cmdletType == null)
+                throw new ArgumentNullException(nameof(cmdletType));
+            
+            foreach (IDocumentationExtractor extractor in DocumentationExtractors)
+            {
+                var examples = extractor.GetCmdletExamples(cmdletType);
+                if (examples != null && examples.Count > 0)
+                    return examples;
+            }
+
+            return new List<CommandExample>();
+        }
+
         /// <summary>
         ///     Split text into paragraphs.
         /// </summary>
@@ -252,7 +269,7 @@ namespace PSReptile
         /// <returns>
         ///     A list of paragraphs.
         /// </returns>
-        static List<string> ToParagraphs(string text)
+        public static List<string> ToParagraphs(string text)
         {
             if (text == null)
                 text = String.Empty;

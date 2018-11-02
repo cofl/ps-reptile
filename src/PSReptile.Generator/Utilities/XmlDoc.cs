@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Xml.Linq;
 
@@ -77,6 +78,27 @@ namespace PSReptile.Utilities
                 return null;
 
             return memberRemarks.Value?.Trim();
+        }
+        
+        /// <summary>
+        ///     Get the example elements (if any) for the specified member.
+        /// </summary>
+        /// <param name="member">
+        ///     The member to examine.
+        /// </param>
+        /// <returns>
+        ///     The member examples, or an empty list of no examples were found that had elements.
+        /// </returns>
+        public IEnumerable<XElement> GetExamples(MemberInfo member)
+        {
+            if (member == null)
+                throw new ArgumentNullException(nameof(member));
+            
+            var examples = GetDocumentation(member)?.Elements("example")?.Where(example => example.HasElements);
+            if (examples == null)
+                return new List<XElement>();
+            
+            return examples;
         }
 
         /// <summary>

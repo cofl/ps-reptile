@@ -1,8 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
+using System.Text;
 using System.Xml.Linq;
+using PSReptile.Maml;
 
 namespace PSReptile.Extractors
 {
@@ -86,6 +89,54 @@ namespace PSReptile.Extractors
                 return null;
 
             return assemblyDoc.GetSummary(parameterProperty);
+        }
+
+        /// <summary>
+        ///     Extract the examples for a Cmdlet parameter.
+        /// </summary>
+        /// <param name="cmdletType">
+        ///     The CLR type that implements the Cmdlet.
+        /// </param>
+        /// <returns>
+        ///     A list of example, which may be empty.
+        /// </returns>
+        public List<CommandExample> GetCmdletExamples(TypeInfo cmdletType)
+        {
+            if (cmdletType == null)
+                throw new ArgumentNullException(nameof(cmdletType));
+            
+            var assemblyDoc = GetAssemblyDocumentation(cmdletType);
+            if(assemblyDoc == null)
+                return null;
+            var rawExamples = assemblyDoc.GetExamples(cmdletType);
+            
+            var examples = new List<CommandExample>();
+            foreach (var example in rawExamples)
+            {
+                var para = example.Elements("para");
+                
+                var descriptions = para.Where(e => e.Attribute("type")?.Value == "description").Select(e => MamlGenerator.ToParagraphs(e.Value.Trim()));
+                var description = new List<string>();
+                foreach(var d in descriptions)
+                    description.AddRange(d);
+                
+                var remarks = para.Where(e => e.Attribute("type")?.Value != "description").Select(e => MamlGenerator.ToParagraphs(e.Value.Trim()));
+                var remark = new List<string>();
+                foreach(var r in remarks)
+                    remark.AddRange(r);
+                
+                examples.Add(
+                    new CommandExample
+                    {
+                        Title = example.Element("title")?.Value.Trim() ?? "Example",
+                        Description = description,
+                        Code = string.Join("\n", example.Elements("code")?.InDocumentOrder().Select(e => e.Value)),
+                        Remarks = remark
+                    }
+                );
+            }
+
+            return examples;
         }
 
         /// <summary>
