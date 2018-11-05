@@ -169,6 +169,7 @@ namespace PSReptile
             }
 
             commandHelp.Examples.AddRange(GetCmdletExamples(cmdletTypeInfo).OrderBy(example => example.Title));
+            commandHelp.ReturnValues.AddRange(GetCmdletReturnValues(cmdletTypeInfo));
 
             return commandHelp;
         }
@@ -245,9 +246,9 @@ namespace PSReptile
             return null;
         }
 
-        List<CommandExample> GetCmdletExamples(TypeInfo cmdletType)
+        IEnumerable<CommandExample> GetCmdletExamples(TypeInfo cmdletType)
         {
-            if(cmdletType == null)
+            if (cmdletType == null)
                 throw new ArgumentNullException(nameof(cmdletType));
             
             foreach (IDocumentationExtractor extractor in DocumentationExtractors)
@@ -257,7 +258,22 @@ namespace PSReptile
                     return examples;
             }
 
-            return new List<CommandExample>();
+            return Enumerable.Empty<CommandExample>();
+        }
+
+        IEnumerable<CommandValue> GetCmdletReturnValues(TypeInfo cmdletType)
+        {
+            if (cmdletType == null)
+                throw new ArgumentNullException(nameof(cmdletType));
+            
+            foreach (var extractor in DocumentationExtractors)
+            {
+                var values = extractor.GetCmdletReturnValues(cmdletType);
+                if (values != null && values.Count > 0)
+                    return values;
+            }
+
+            return Enumerable.Empty<CommandValue>();
         }
 
         /// <summary>

@@ -140,6 +140,74 @@ namespace PSReptile.Extractors
         }
 
         /// <summary>
+        ///     Extract the return values for a Cmdlet.
+        /// </summary>
+        /// <param name="cmdletType">
+        ///     The CLR type that implements the Cmdlet.
+        /// </param>
+        /// <returns>
+        ///     A list of values, which may be empty or null.
+        /// </returns>
+        public List<CommandValue> GetCmdletReturnValues(TypeInfo cmdletType)
+        {
+            if (cmdletType == null)
+                throw new ArgumentNullException(nameof(cmdletType));
+            
+            var assemblyDoc = GetAssemblyDocumentation(cmdletType);
+            if(assemblyDoc == null)
+                return null;
+            var returnElements = assemblyDoc.GetReturns(cmdletType);
+
+            var returnValues = new List<CommandValue>();
+            foreach(var returnElement in returnElements)
+            {
+                var see = returnElement.Element("sees");
+                var paras = returnElement.Elements("para")?.Select(e => MamlGenerator.ToParagraphs(e?.Value?.Trim())).ToList() ?? new List<List<string>>();
+                var description = new List<string>();
+
+                if (see == null && paras.Count == 0)
+                {
+                    description.AddRange(MamlGenerator.ToParagraphs(returnElement.Value?.Trim()));
+                } else
+                {
+                    foreach (var list in paras)
+                    {
+                        description.AddRange(list);
+                    }
+                }
+                
+                if(see == null || !see.HasAttributes)
+                {
+                    var first = description[0];
+                    description.RemoveAt(0);
+                    returnValues.Add(
+                        new CommandValue
+                        {
+                            DataType = new DataType { Name = first },
+                            Description = description
+                        }
+                    );
+                    continue;
+                }
+
+                returnValues.Add(
+                    new CommandValue
+                    {
+                        DataType = new DataType
+                        {
+                            Name = see.Attribute("cref")?.Value?.Trim() ?? string.Empty,
+                            Uri = see.Attribute("uri")?.Value?.Trim(),
+                            Description = MamlGenerator.ToParagraphs(see.Value?.Trim())
+                        },
+                        Description = description
+                    }
+                );
+            }
+
+            return returnValues;
+        }
+
+        /// <summary>
         ///     Retrieve the documentation (if any) for the specified property's declaring type's assembly.
         /// </summary>
         /// <param name="property">

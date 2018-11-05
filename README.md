@@ -31,7 +31,6 @@ public class GetFooConnection
 public class GetFooConnection
 {
     [Parameter]
-    [ParameterHelpFromFile("Help/Connections/Get-FooConnection/All.txt")]
     public SwitchParameter All { get; set; }
 }
 ```
@@ -40,8 +39,10 @@ public class GetFooConnection
 
 ```csharp
 /// <summary>Retrieve information about one or more Foo connection profiles.</summary>
+/// <returns>
+///    <see cref="FooConnectionProfile">A foo connection profile.</see>
+/// </returns>
 [Cmdlet(VerbsCommon.Get, "Foo")]
-[OutputType(typeof(FooConnectionProfile))]
 public class GetFooConnection
 {
     /// <summary>Retrieve all connection profiles.</summary>
@@ -54,6 +55,10 @@ public class GetFooConnection
 
 ```csharp
 /// <summary>Retrieve information about one or more Foo connection profiles.</summary>
+/// <returns>
+///    <see cref="FooConnectionProfile">A connection profile type.</see>
+///    <para>A foo connection profile.</para>
+/// </returns>
 [Cmdlet(VerbsCommon.Get, "Foo")]
 [OutputType(typeof(FooConnectionProfile))]
 public class GetFooConnection

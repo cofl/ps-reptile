@@ -94,11 +94,25 @@ namespace PSReptile.Utilities
             if (member == null)
                 throw new ArgumentNullException(nameof(member));
             
-            var examples = GetDocumentation(member)?.Elements("example")?.Where(example => example.HasElements);
-            if (examples == null)
-                return new List<XElement>();
+            return GetDocumentation(member)?.Elements("example")?.Where(example => example.HasElements)
+                    ?? Enumerable.Empty<XElement>();
+        }
+
+        /// <summary>
+        ///     Get the returns elements (if any) for the specified member.
+        /// </summary>
+        /// <param name="member">
+        ///     The member to examine.
+        /// </param>
+        /// <returns>
+        ///     The member returns, or an empty list of no returns were found.
+        /// </returns>
+        public IEnumerable<XElement> GetReturns(MemberInfo member)
+        {
+            if (member == null)
+                throw new ArgumentNullException(nameof(member));
             
-            return examples;
+            return GetDocumentation(member)?.Elements("returns") ?? Enumerable.Empty<XElement>();
         }
 
         /// <summary>

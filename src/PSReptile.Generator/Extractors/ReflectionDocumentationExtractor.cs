@@ -117,5 +117,35 @@ namespace PSReptile.Extractors
 
             return examples;
         }
+
+        /// <summary>
+        ///     Extract the return values for a Cmdlet.
+        /// </summary>
+        /// <param name="cmdletType">
+        ///     The CLR type that implements the Cmdlet.
+        /// </param>
+        /// <returns>
+        ///     A list of values, which may be empty or null.
+        /// </returns>
+        public List<CommandValue> GetCmdletReturnValues(TypeInfo cmdletType)
+        {
+            if (cmdletType == null)
+                throw new ArgumentNullException(nameof(cmdletType));
+
+            var returnValuesAttributes = cmdletType.GetCustomAttributes<OutputTypeAttribute>();
+            if (returnValuesAttributes == null)
+                return null;
+            
+            var returnValues = new List<CommandValue>();
+            foreach (var attribute in returnValuesAttributes)
+            {
+                foreach (var type in attribute.Type)
+                {
+                    returnValues.Add(new CommandValue { DataType = new DataType { Name = type.Name } });
+                }
+            }
+
+            return returnValues;
+        }
     }
 }

@@ -55,8 +55,19 @@ namespace PSReptile.Extractors
         ///     The CLR type that implements the Cmdlet.
         /// </param>
         /// <returns>
-        ///     A list of example, which may be empty.
+        ///     A list of examples, which may be empty or null.
         /// </returns>
         List<CommandExample> GetCmdletExamples(TypeInfo cmdletType);
+
+        /// <summary>
+        ///     Extract the return values for a Cmdlet.
+        /// </summary>
+        /// <param name="cmdletType">
+        ///     The CLR type that implements the Cmdlet.
+        /// </param>
+        /// <returns>
+        ///     A list of values, which may be empty or null.
+        /// </returns>
+        List<CommandValue> GetCmdletReturnValues(TypeInfo cmdletType);
     }
 }
