@@ -57,36 +57,40 @@ namespace PSReptile.Tests
   <command:syntax>
     <command:syntaxItem>
       <maml:name>Get-Greeting</maml:name>
-      <command:parameter required=""true"" globbing=""false"" pipelineInput=""false"" position=""named"">
+      <command:parameter required=""true"" variableLength=""true"" globbing=""false"" pipelineInput=""false"" position=""named"" aliases=""none"">
         <maml:name>Name</maml:name>
         <maml:description>
           <maml:para>The name of the person to greet</maml:para>
         </maml:description>
         <command:parameterValue required=""true"" variableLength=""false"">String</command:parameterValue>
+        <dev:defaultValue>None</dev:defaultValue>
       </command:parameter>
-      <command:parameter required=""false"" globbing=""false"" pipelineInput=""true (ByPropertyName, FromRemainingArguments)"" position=""named"">
+      <command:parameter required=""false"" variableLength=""true"" globbing=""false"" pipelineInput=""true (ByPropertyName, FromRemainingArguments)"" position=""named"" aliases=""none"">
         <maml:name>Title</maml:name>
         <maml:description>
           <maml:para>Title of the person to greet, sans period.</maml:para>
         </maml:description>
-        <command:parameterValue required=""false"" variableLength=""false"">String</command:parameterValue>
+        <command:parameterValue required=""true"" variableLength=""false"">String</command:parameterValue>
+        <dev:defaultValue>None</dev:defaultValue>
       </command:parameter>
     </command:syntaxItem>
   </command:syntax>
   <command:parameters>
-    <command:parameter required=""true"" globbing=""false"" pipelineInput=""false"" position=""named"">
+    <command:parameter required=""true"" variableLength=""true"" globbing=""false"" pipelineInput=""false"" position=""named"" aliases=""none"">
       <maml:name>Name</maml:name>
       <maml:description>
         <maml:para>The name of the person to greet</maml:para>
       </maml:description>
       <command:parameterValue required=""true"" variableLength=""false"">String</command:parameterValue>
+      <dev:defaultValue>None</dev:defaultValue>
     </command:parameter>
-    <command:parameter required=""false"" globbing=""false"" pipelineInput=""true (ByPropertyName, FromRemainingArguments)"" position=""named"">
+    <command:parameter required=""false"" variableLength=""true"" globbing=""false"" pipelineInput=""true (ByPropertyName, FromRemainingArguments)"" position=""named"" aliases=""none"">
       <maml:name>Title</maml:name>
       <maml:description>
         <maml:para>Title of the person to greet, sans period.</maml:para>
       </maml:description>
-      <command:parameterValue required=""false"" variableLength=""false"">String</command:parameterValue>
+      <command:parameterValue required=""true"" variableLength=""false"">String</command:parameterValue>
+      <dev:defaultValue>None</dev:defaultValue>
     </command:parameter>
   </command:parameters>
   <command:inputTypes />
@@ -139,22 +143,24 @@ namespace PSReptile.Tests
   <command:syntax>
     <command:syntaxItem>
       <maml:name>Get-FooBar</maml:name>
-      <command:parameter required=""true"" globbing=""false"" pipelineInput=""true (ByValue)"" position=""0"">
+      <command:parameter required=""true"" variableLength=""true"" globbing=""false"" pipelineInput=""true (ByValue)"" position=""0"" aliases=""none"">
         <maml:name>Name</maml:name>
         <maml:description>
           <maml:para>The bar name</maml:para>
         </maml:description>
         <command:parameterValue required=""true"" variableLength=""false"">String</command:parameterValue>
+        <dev:defaultValue>None</dev:defaultValue>
       </command:parameter>
     </command:syntaxItem>
   </command:syntax>
   <command:parameters>
-    <command:parameter required=""true"" globbing=""false"" pipelineInput=""true (ByValue)"" position=""0"">
+    <command:parameter required=""true"" variableLength=""true"" globbing=""false"" pipelineInput=""true (ByValue)"" position=""0"" aliases=""none"">
       <maml:name>Name</maml:name>
       <maml:description>
         <maml:para>The bar name</maml:para>
       </maml:description>
       <command:parameterValue required=""true"" variableLength=""false"">String</command:parameterValue>
+      <dev:defaultValue>None</dev:defaultValue>
     </command:parameter>
   </command:parameters>
   <command:inputTypes />

@@ -127,7 +127,7 @@ namespace PSReptile
                 var parameter = new Parameter
                 {
                     Name = property.Name,
-                    Aliases = string.Join(", ", property.GetCustomAttribute<AliasAttribute>()?.AliasNames ?? Enumerable.Empty<string>()),
+                    Aliases = string.Join(", ", property.GetCustomAttribute<AliasAttribute>()?.AliasNames ?? new List<string> { "none" }),
                     Description = GetParameterDescription(property),
                     Value =
                     {
@@ -150,7 +150,7 @@ namespace PSReptile
                 var parameterSetNames = new LinkedList<string>();
                 foreach(var attribute in parameterAttributes)
                 {
-                    parameter.Value.IsMandatory = parameter.Value.IsMandatory || attribute.Mandatory;
+                    parameter.IsMandatory = parameter.IsMandatory || attribute.Mandatory;
                     parameter.SupportsPipelineInput |= attribute.ValueFromPipeline ? PipelineInputType.ByValue : PipelineInputType.None;
                     parameter.SupportsPipelineInput |= attribute.ValueFromPipelineByPropertyName ? PipelineInputType.ByPropertyName : PipelineInputType.None;
                     parameter.SupportsPipelineInput |= attribute.ValueFromRemainingArguments ? PipelineInputType.FromRemainingArguments : PipelineInputType.None;

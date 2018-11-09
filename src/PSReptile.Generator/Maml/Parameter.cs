@@ -16,12 +16,6 @@ namespace PSReptile.Maml
         public string Name { get; set; }
 
         /// <summary>
-        ///     The default value of the parameter ("dev:defaultValue").
-        /// </summary>
-        [XmlElement("defaultValue", Namespace = Constants.XmlNamespace.Dev)]
-        public string DefaultValue { get; set; } = "None";
-
-        /// <summary>
         ///     The parameter's detailed description (one or more paragraphs; "maml:description/maml:para").
         /// </summary>
         [XmlArray("description", Namespace = Constants.XmlNamespace.MAML, Order = 1)]
@@ -35,13 +29,10 @@ namespace PSReptile.Maml
         public ParameterValue Value { get; set; } = new ParameterValue();
 
         /// <summary>
-        ///     The parameter's aliases.
+        ///     The default value of the parameter ("dev:defaultValue").
         /// </summary>
-        /// <remarks>
-        ///     This is a list of the form "Alias1, Alias2, Alias3, etc...".
-        /// </remarks>
-        [XmlAttribute("aliases")]
-        public string Aliases { get; set; }
+        [XmlElement("defaultValue", Namespace = Constants.XmlNamespace.Dev, Order = 3)]
+        public string DefaultValue { get; set; } = "None";
 
         /// <summary>
         ///     Is the parameter mandatory?
@@ -78,5 +69,14 @@ namespace PSReptile.Maml
         /// </remarks>
         [XmlAttribute("position")]
         public string Position { get; set; } = "named";
+
+        /// <summary>
+        ///     The parameter's aliases.
+        /// </summary>
+        /// <remarks>
+        ///     This is a list of the form "Alias1, Alias2, Alias3, etc...".
+        /// </remarks>
+        [XmlAttribute("aliases")]
+        public string Aliases { get; set; } = "none";
     }
 }
