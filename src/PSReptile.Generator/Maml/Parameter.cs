@@ -16,6 +16,12 @@ namespace PSReptile.Maml
         public string Name { get; set; }
 
         /// <summary>
+        ///     The default value of the parameter ("dev:defaultValue").
+        /// </summary>
+        [XmlElement("defaultValue", Namespace = Constants.XmlNamespace.Dev)]
+        public string DefaultValue { get; set; } = "None";
+
+        /// <summary>
         ///     The parameter's detailed description (one or more paragraphs; "maml:description/maml:para").
         /// </summary>
         [XmlArray("description", Namespace = Constants.XmlNamespace.MAML, Order = 1)]
@@ -29,10 +35,28 @@ namespace PSReptile.Maml
         public ParameterValue Value { get; set; } = new ParameterValue();
 
         /// <summary>
+        ///     The parameter's aliases.
+        /// </summary>
+        /// <remarks>
+        ///     This is a list of the form "Alias1, Alias2, Alias3, etc...".
+        /// </remarks>
+        [XmlAttribute("aliases")]
+        public string Aliases { get; set; }
+
+        /// <summary>
         ///     Is the parameter mandatory?
         /// </summary>
         [XmlAttribute("required")]
         public bool IsMandatory { get; set; }
+
+        /// <summary>
+        ///     Is the parameter variable length?
+        /// </summary>
+        /// <remarks>
+        ///     This seems to always be true in official documentation.
+        /// </remarks>
+        [XmlAttribute("variableLength")]
+        public bool IsVariableLength { get; set; } = true;
 
         /// <summary>
         ///     Does the parameter support globbing (wildcards)?

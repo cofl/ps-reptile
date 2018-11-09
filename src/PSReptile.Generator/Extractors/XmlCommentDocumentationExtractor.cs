@@ -77,18 +77,18 @@ namespace PSReptile.Extractors
         /// <returns>
         ///     The description, or <c>null</c> if no description could be extracted by this extractor.
         /// 
-        ///     An empty string means a description was extracted, but the description is empty (this is legal).
+        ///     An empty list means a description was extracted, but the description is empty (this is legal).
         /// </returns>
-        public string GetParameterDescription(PropertyInfo parameterProperty)
+        public List<string> GetParameterDescription(PropertyInfo parameterProperty)
         {
             if (parameterProperty == null)
                 throw new ArgumentNullException(nameof(parameterProperty));
 
-            XmlDoc assemblyDoc = GetAssemblyDocumentation(parameterProperty);
+            var assemblyDoc = GetAssemblyDocumentation(parameterProperty);
             if (assemblyDoc == null)
                 return null;
 
-            return assemblyDoc.GetSummary(parameterProperty);
+            return MamlGenerator.ToParagraphs(assemblyDoc.GetSummary(parameterProperty));
         }
 
         /// <summary>
@@ -183,7 +183,7 @@ namespace PSReptile.Extractors
                     returnValues.Add(
                         new CommandValue
                         {
-                            DataType = new DataType { Name = first },
+                            DataType = { Name = first },
                             Description = description
                         }
                     );
@@ -193,7 +193,7 @@ namespace PSReptile.Extractors
                 returnValues.Add(
                     new CommandValue
                     {
-                        DataType = new DataType
+                        DataType =
                         {
                             Name = see.Attribute("cref")?.Value?.Trim() ?? string.Empty,
                             Uri = see.Attribute("uri")?.Value?.Trim(),
@@ -205,6 +205,92 @@ namespace PSReptile.Extractors
             }
 
             return returnValues;
+        }
+
+        /// <summary>
+        ///     Extract the input types for a Cmdlet.
+        /// </summary>
+        /// <param name="cmdletType">
+        ///     The CLR type that implements the Cmdlet.
+        /// </param>
+        /// <returns>
+        ///     A list of values, which may be empty or null.
+        /// </returns>
+        public List<CommandValue> GetCmdletInputTypes(TypeInfo cmdletType)
+        {
+            if (cmdletType == null)
+                throw new ArgumentNullException(nameof(cmdletType));
+
+            var assemblyDoc = GetAssemblyDocumentation(cmdletType);
+            if(assemblyDoc == null)
+                return null;
+            var inputElements = assemblyDoc.GetInputs(cmdletType);
+
+            var inputTypes = new List<CommandValue>();
+            foreach(var element in inputElements)
+            {
+                var see = element.Element("sees");
+                var paras = element.Elements("para")?.Select(e => MamlGenerator.ToParagraphs(e?.Value?.Trim())).ToList() ?? new List<List<string>>();
+                var description = new List<string>();
+
+                if (see == null && paras.Count == 0)
+                {
+                    description.AddRange(MamlGenerator.ToParagraphs(element.Value?.Trim()));
+                } else
+                {
+                    foreach (var list in paras)
+                    {
+                        description.AddRange(list);
+                    }
+                }
+                
+                if(see == null || !see.HasAttributes)
+                {
+                    var first = description[0];
+                    description.RemoveAt(0);
+                    element.Add(
+                        new CommandValue
+                        {
+                            DataType = { Name = first },
+                            Description = description
+                        }
+                    );
+                    continue;
+                }
+
+                var name = see.Attribute("cref")?.Value?.Trim() ?? string.Empty;
+                if (name != null)
+                {
+                    try {
+                        var type = Type.GetType(name);
+                        if (type != null)
+                        {
+                            name = MamlGenerator.PowerShellIfyTypeName(type);
+                        }
+                    } catch (ArgumentException)
+                    {
+                        // Ignore this exception
+                    } catch(TypeLoadException)
+                    {
+                        // Ignore this exception
+                    }
+                }
+
+                element.Add(
+                    new CommandValue
+                    {
+                        DataType =
+                        {
+                            Name = name ?? string.Empty,
+                            Uri = see.Attribute("uri")?.Value?.Trim(),
+                            Description = MamlGenerator.ToParagraphs(see.Value?.Trim())
+                        },
+                        Description = description
+                    }
+                );
+            }
+
+            return inputTypes;
         }
 
         /// <summary>
@@ -250,7 +336,7 @@ namespace PSReptile.Extractors
         /// <returns>
         ///     The documentation XML (as an <see cref="XmlDoc"/>), or <c>null</c> if no documentation was found for the type's assembly.
         /// </returns>
-        XmlDoc GetAssemblyDocumentation(TypeInfo type)
+        private XmlDoc GetAssemblyDocumentation(TypeInfo type)
         {
             if (type == null)
                 throw new ArgumentNullException(nameof(type));

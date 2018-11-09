@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Management.Automation;
 using System.Reflection;
 using PSReptile.Maml;
@@ -67,9 +68,9 @@ namespace PSReptile.Extractors
         /// <returns>
         ///     The description, or <c>null</c> if no description could be extracted by this extractor.
         /// 
-        ///     An empty string means a description was extracted, but the description is empty (this is legal).
+        ///     An empty list means a description was extracted, but the description is empty (this is legal).
         /// </returns>
-        public string GetParameterDescription(PropertyInfo parameterProperty)
+        public List<string> GetParameterDescription(PropertyInfo parameterProperty)
         {
             if (parameterProperty == null)
                 throw new ArgumentNullException(nameof(parameterProperty));
@@ -80,7 +81,7 @@ namespace PSReptile.Extractors
 
             // TODO: Handle resource-based messages (with locale).
 
-            return descriptionAttribute.HelpMessage?.Trim();
+            return MamlGenerator.ToParagraphs(descriptionAttribute.HelpMessage?.Trim());
         }
 
         /// <summary>
@@ -132,8 +133,8 @@ namespace PSReptile.Extractors
             if (cmdletType == null)
                 throw new ArgumentNullException(nameof(cmdletType));
 
-            var returnValuesAttributes = cmdletType.GetCustomAttributes<OutputTypeAttribute>();
-            if (returnValuesAttributes == null)
+            var returnValuesAttributes = cmdletType.GetCustomAttributes<OutputTypeAttribute>().ToList();
+            if (returnValuesAttributes.Count == 0)
                 return null;
             
             var returnValues = new List<CommandValue>();
@@ -141,11 +142,52 @@ namespace PSReptile.Extractors
             {
                 foreach (var type in attribute.Type)
                 {
-                    returnValues.Add(new CommandValue { DataType = new DataType { Name = type.Name } });
+                    returnValues.Add(new CommandValue
+                    {
+                        DataType =
+                        {
+                            Name = type.Name
+                        }
+                    });
                 }
             }
 
             return returnValues;
+        }
+
+        /// <summary>
+        ///     Extract the input types for a Cmdlet.
+        /// </summary>
+        /// <param name="cmdletType">
+        ///     The CLR type that implements the Cmdlet.
+        /// </param>
+        /// <returns>
+        ///     A list of values, which may be empty or null.
+        /// </returns>
+        public List<CommandValue> GetCmdletInputTypes(TypeInfo cmdletType)
+        {
+            if (cmdletType == null)
+                throw new ArgumentNullException(nameof(cmdletType));
+
+            var inputTypeAttributes = cmdletType.GetCustomAttributes<CmdletInputTypeAttribute>().ToList();
+            if (inputTypeAttributes.Count == 0)
+                return null;
+            
+            var inputTypes = new List<CommandValue>();
+            foreach (var attribute in inputTypeAttributes)
+            {
+                inputTypes.Add(new CommandValue
+                {
+                    DataType =
+                    {
+                        Name = attribute.IsCLRType ? MamlGenerator.PowerShellIfyTypeName(attribute.Type) : attribute.Name,
+                        Uri = attribute.Uri
+                    },
+                    Description = MamlGenerator.ToParagraphs(attribute.Description)
+                });
+            }
+
+            return inputTypes;
         }
     }
 }

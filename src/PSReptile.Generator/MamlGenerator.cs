@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -94,82 +95,89 @@ namespace PSReptile
             if (!Reflector.IsCmdlet(cmdletType))
                 throw new ArgumentException($"'{cmdletType.FullName}' does not implement a Cmdlet (must be public, non-abstract, derive from '{typeof(Cmdlet).FullName}', and be decorated with '{typeof(CmdletAttribute).FullName}').", nameof(cmdletType));
 
-            TypeInfo cmdletTypeInfo = cmdletType.GetTypeInfo();
-            CmdletAttribute cmdletAttribute = cmdletTypeInfo.GetCustomAttribute<CmdletAttribute>();
+            var cmdletTypeInfo = cmdletType.GetTypeInfo();
+            var cmdletAttribute = cmdletTypeInfo.GetCustomAttribute<CmdletAttribute>();
             Debug.Assert(cmdletAttribute != null, "cmdletAttribute != null");
 
-            Command commandHelp = new Command
+            var commandHelp = new Command
             {
                 Details =
                 {
                     Name = $"{cmdletAttribute.VerbName}-{cmdletAttribute.NounName}",
-                    Synopsis = ToParagraphs(
-                        GetCmdletSynopsis(cmdletTypeInfo) ?? String.Empty
-                    ),
+                    Synopsis = ToParagraphs(GetCmdletSynopsis(cmdletTypeInfo) ?? String.Empty),
                     Verb = cmdletAttribute.VerbName,
                     Noun = cmdletAttribute.NounName
                 },
-                Description = ToParagraphs(
-                    GetCmdletDescription(cmdletTypeInfo) ?? String.Empty
-                )
+                Description = ToParagraphs(GetCmdletDescription(cmdletTypeInfo) ?? String.Empty)
             };
 
             var parameterSets = new Dictionary<string, SyntaxItem>();
 
-            foreach (PropertyInfo property in cmdletType.GetProperties().OrderBy(property => property.CanRead))
+            foreach (var property in cmdletType.GetProperties().OrderBy(property => property.CanRead))
             {
                 if (!Reflector.IsCmdletParameter(property))
                     continue;
 
-                ParameterAttribute parameterAttribute = property.GetCustomAttributes<ParameterAttribute>().First();
+                var parameterAttributes = property.GetCustomAttributes<ParameterAttribute>().ToList();
+                if (parameterAttributes.Count == 0)
+                    continue;
 
                 // TODO: Add support for localised help from resources.
 
-                Parameter parameter = new Parameter
+                var parameter = new Parameter
                 {
                     Name = property.Name,
-                    Description = ToParagraphs(parameterAttribute.HelpMessage),
+                    Aliases = string.Join(", ", property.GetCustomAttribute<AliasAttribute>()?.AliasNames ?? Enumerable.Empty<string>()),
+                    Description = GetParameterDescription(property),
                     Value =
                     {
-                        IsMandatory = parameterAttribute.Mandatory,
-                        DataType = property.PropertyType.Namespace == "System" ? // This is a PowerShell convention.
-                            property.PropertyType.Name
-                            :
-                            property.PropertyType.FullName,
+                        IsMandatory = property.PropertyType != typeof(SwitchParameter),
+                        DataType = PowerShellIfyTypeName(property.PropertyType),
                     },
-                    IsMandatory = parameterAttribute.Mandatory,
-                    SupportsGlobbing = property.GetCustomAttribute<SupportsWildcardsAttribute>() != null,
-                    SupportsPipelineInput = (parameterAttribute.ValueFromPipeline ? PipelineInputType.ByValue : PipelineInputType.None)
-                                            | (parameterAttribute.ValueFromPipelineByPropertyName ? PipelineInputType.ByPropertyName : PipelineInputType.None)
-                                            | (parameterAttribute.ValueFromRemainingArguments ? PipelineInputType.FromRemainingArguments : PipelineInputType.None)
+                    SupportsGlobbing = property.GetCustomAttribute<SupportsWildcardsAttribute>() != null
                 };
-                commandHelp.Parameters.Add(parameter);
 
-                // Update command syntax for the current parameter set.
-                string parameterSetName = parameterAttribute.ParameterSetName ?? String.Empty;
-                
-                SyntaxItem parameterSetSyntax;
-                if (!parameterSets.TryGetValue(parameterSetName, out parameterSetSyntax))
+                var firstParameterAttribute = parameterAttributes.First();
+                if(firstParameterAttribute.Position != int.MinValue)
                 {
-                    parameterSetSyntax = new SyntaxItem
-                    {
-                        CommandName = commandHelp.Details.Name
-                    };
-                    parameterSets.Add(parameterSetName, parameterSetSyntax);
+                    parameter.Position = firstParameterAttribute.Position.ToString();
                 }
 
-                parameterSetSyntax.Parameters.Add(parameter);
+                var defaultValue = GetParameterDefaultValue(cmdletType, property);
+                if(defaultValue != null)
+                    parameter.DefaultValue = defaultValue;
+
+                var parameterSetNames = new LinkedList<string>();
+                foreach(var attribute in parameterAttributes)
+                {
+                    parameter.Value.IsMandatory = parameter.Value.IsMandatory || attribute.Mandatory;
+                    parameter.SupportsPipelineInput |= attribute.ValueFromPipeline ? PipelineInputType.ByValue : PipelineInputType.None;
+                    parameter.SupportsPipelineInput |= attribute.ValueFromPipelineByPropertyName ? PipelineInputType.ByPropertyName : PipelineInputType.None;
+                    parameter.SupportsPipelineInput |= attribute.ValueFromRemainingArguments ? PipelineInputType.FromRemainingArguments : PipelineInputType.None;
+                    parameterSetNames.AddFirst(attribute.ParameterSetName);
+                }
+                commandHelp.Parameters.Add(parameter);
+
+                foreach(var name in parameterSetNames)
+                {
+                    if (!parameterSets.TryGetValue(name, out var parameterSetSyntax))
+                    {
+                        parameterSetSyntax = new SyntaxItem { CommandName = commandHelp.Details.Name };
+                        parameterSets.Add(name, parameterSetSyntax);
+                    }
+
+                    parameterSetSyntax.Parameters.Add(parameter);
+                }
             }
 
-            foreach (string parameterSetName in parameterSets.Keys.OrderBy(name => name))
+            foreach (var parameterSetName in parameterSets.Keys.OrderBy(name => name))
             {
-                commandHelp.Syntax.Add(
-                    parameterSets[parameterSetName]
-                );
+                commandHelp.Syntax.Add(parameterSets[parameterSetName]);
             }
 
             commandHelp.Examples.AddRange(GetCmdletExamples(cmdletTypeInfo).OrderBy(example => example.Title));
             commandHelp.ReturnValues.AddRange(GetCmdletReturnValues(cmdletTypeInfo));
+            commandHelp.InputTypes.AddRange(GetCmdletInputTypes(cmdletTypeInfo));
 
             return commandHelp;
         }
@@ -231,19 +239,31 @@ namespace PSReptile
         /// <returns>
         ///     The description, or <c>null</c> if none of the registered documentation extractors was able to provide a description for the Cmdlet.
         /// </returns>
-        string GetParameterDescription(PropertyInfo parameterProperty)
+        List<string> GetParameterDescription(PropertyInfo parameterProperty)
         {
             if (parameterProperty == null)
                 throw new ArgumentNullException(nameof(parameterProperty));
 
             foreach (IDocumentationExtractor extractor in DocumentationExtractors)
             {
-                string description = extractor.GetParameterDescription(parameterProperty);
+                var description = extractor.GetParameterDescription(parameterProperty);
                 if (description != null)
                     return description;
             }
 
-            return null;
+            return new List<string>();
+        }
+
+        string GetParameterDefaultValue(Type cmdletType, PropertyInfo propertyInfo)
+        {
+            var temp = cmdletType.GetConstructors(BindingFlags.Public)?.FirstOrDefault()?.Invoke(new object[0]) ?? null;
+            if(temp is null)
+                return null;
+            
+            var value = propertyInfo.GetValue(temp);
+            (temp as IDisposable)?.Dispose();
+
+            return value?.ToString() ?? null;
         }
 
         IEnumerable<CommandExample> GetCmdletExamples(TypeInfo cmdletType)
@@ -276,6 +296,21 @@ namespace PSReptile
             return Enumerable.Empty<CommandValue>();
         }
 
+        IEnumerable<CommandValue> GetCmdletInputTypes(TypeInfo cmdletType)
+        {
+            if (cmdletType == null)
+                throw new ArgumentNullException(nameof(cmdletType));
+            
+            foreach(var extractor in DocumentationExtractors)
+            {
+                var values = extractor.GetCmdletInputTypes(cmdletType);
+                if (values != null && values.Count > 0)
+                    return values;
+            }
+
+            return Enumerable.Empty<CommandValue>();
+        }
+
         /// <summary>
         ///     Split text into paragraphs.
         /// </summary>
@@ -295,6 +330,27 @@ namespace PSReptile
                         options: StringSplitOptions.None
                     ).Select(line => line.Trim())
                     .ToList();
+        }
+
+        /// <summary>
+        ///     Powershellifies a type's name (using the simple name if in the System namespace).
+        /// </summary>
+        /// <param name="type">
+        ///     Ths type to get the name of.
+        /// </param>
+        /// <returns>
+        ///     The type's name according to PowerShell's convention.
+        /// </returns>
+        public static string PowerShellIfyTypeName(Type type)
+        {
+            // This is a PowerShell convention.
+            if (type.Namespace == "System")
+            {
+                return type.Name;
+            } else
+            {
+                return type.FullName;
+            }
         }
     }
 }

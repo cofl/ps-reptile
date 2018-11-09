@@ -116,6 +116,24 @@ namespace PSReptile.Utilities
         }
 
         /// <summary>
+        ///     Get the input elements (if any) for the specified member.
+        /// </summary>
+        /// <param name="member">
+        ///     The member to examine.
+        /// </param>
+        /// <returns>
+        ///     The member input elements, or an empty list of no returns were found.
+        /// </returns>
+        /// <seealso cref="Extractors.IDocumentationExtractor.GetCmdletInputTypes(TypeInfo)" />
+        public IEnumerable<XElement> GetInputs(MemberInfo member)
+        {
+            if (member == null)
+                throw new ArgumentNullException(nameof(member));
+            
+            return GetDocumentation(member)?.Elements("input") ?? Enumerable.Empty<XElement>();
+        }
+
+        /// <summary>
         ///     Get the documentation (if any) for the specified member.
         /// </summary>
         /// <param name="member">

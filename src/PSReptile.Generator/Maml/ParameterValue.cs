@@ -18,12 +18,12 @@ namespace PSReptile.Maml
         ///     Is the parameter mandatory?
         /// </summary>
         [XmlAttribute("required")]
-        public bool IsMandatory { get; set; }
+        public bool IsMandatory { get; set; } = false;
 
         /// <summary>
         ///     Is the parameter's data type variable-length?
         /// </summary>
         [XmlAttribute("variableLength")]
-        public bool IsVariableLength { get; set; }
+        public bool IsVariableLength { get; set; } = false;
     }
 }
