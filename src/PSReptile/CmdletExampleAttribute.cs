@@ -32,7 +32,7 @@ namespace PSReptile
         /// <summary>
         ///     The title of the example.
         /// </summary>
-        public string Title;
+        public string Title { get; }
 
         /// <summary>
         ///     An introduction to the example.
