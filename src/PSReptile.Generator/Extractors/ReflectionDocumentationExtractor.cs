@@ -75,7 +75,7 @@ namespace PSReptile.Extractors
             if (parameterProperty == null)
                 throw new ArgumentNullException(nameof(parameterProperty));
 
-            ParameterAttribute descriptionAttribute = parameterProperty.GetCustomAttribute<ParameterAttribute>();
+            var descriptionAttribute = parameterProperty.GetCustomAttributes<ParameterAttribute>().Last();
             if (descriptionAttribute == null)
                 return null;
 

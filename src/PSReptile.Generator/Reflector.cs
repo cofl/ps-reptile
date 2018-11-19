@@ -60,20 +60,25 @@ namespace PSReptile
         /// <param name="property">
         ///     The property to examine.
         /// </param>
+        /// <param name="parameterAttributes">
+        ///     A variable to put the collection of parameter attributes into.
+        /// </param>
         /// <returns>
         ///     <c>true</c>, if the property represents a Cmdlet parameter; otherwise, <c>false</c>.
         /// </returns>
-        public static bool IsCmdletParameter(PropertyInfo property)
+        public static bool IsCmdletParameter(PropertyInfo property, out IEnumerable<ParameterAttribute> parameterAttributes)
         {
             if (property == null)
                 throw new ArgumentNullException(nameof(property));
 
+            parameterAttributes = null;
             // Public and writable.
             if (!property.CanWrite || !property.GetSetMethod().IsPublic)
                 return false;
 
+            parameterAttributes = property.GetCustomAttributes<ParameterAttribute>();
             // Must be decorated with [Parameter]
-            if (!property.GetCustomAttributes<ParameterAttribute>().Any())
+            if (!parameterAttributes.Any())
                 return false;
 
             return true;

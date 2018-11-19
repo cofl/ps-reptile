@@ -45,6 +45,8 @@ namespace PSReptile
         {
             if (documentationExtractors == null)
                 throw new ArgumentNullException(nameof(documentationExtractors));
+            if (documentationExtractors.Any(item => item == null))
+                throw new ArgumentNullException(nameof(documentationExtractors), "List had null element.");
 
             DocumentationExtractors.AddRange(documentationExtractors);
         }
@@ -112,50 +114,14 @@ namespace PSReptile
             };
 
             var parameterSets = new Dictionary<string, SyntaxItem>();
-
             foreach (var property in cmdletType.GetProperties().OrderBy(property => property.CanRead))
             {
-                if (!Reflector.IsCmdletParameter(property))
-                    continue;
-
-                var parameterAttributes = property.GetCustomAttributes<ParameterAttribute>().ToList();
-                if (parameterAttributes.Count == 0)
+                if (!Reflector.IsCmdletParameter(property, out var parameterAttributes))
                     continue;
 
                 // TODO: Add support for localised help from resources.
 
-                var parameter = new Parameter
-                {
-                    Name = property.Name,
-                    Aliases = string.Join(", ", property.GetCustomAttribute<AliasAttribute>()?.AliasNames ?? new List<string> { "none" }),
-                    Description = GetParameterDescription(property),
-                    Value =
-                    {
-                        IsMandatory = property.PropertyType != typeof(SwitchParameter),
-                        DataType = PowerShellIfyTypeName(property.PropertyType),
-                    },
-                    SupportsGlobbing = property.GetCustomAttribute<SupportsWildcardsAttribute>() != null
-                };
-
-                var firstParameterAttribute = parameterAttributes.First();
-                if(firstParameterAttribute.Position != int.MinValue)
-                {
-                    parameter.Position = firstParameterAttribute.Position.ToString();
-                }
-
-                var defaultValue = GetParameterDefaultValue(cmdletType, property);
-                if(defaultValue != null)
-                    parameter.DefaultValue = defaultValue;
-
-                var parameterSetNames = new LinkedList<string>();
-                foreach(var attribute in parameterAttributes)
-                {
-                    parameter.IsMandatory = parameter.IsMandatory || attribute.Mandatory;
-                    parameter.SupportsPipelineInput |= attribute.ValueFromPipeline ? PipelineInputType.ByValue : PipelineInputType.None;
-                    parameter.SupportsPipelineInput |= attribute.ValueFromPipelineByPropertyName ? PipelineInputType.ByPropertyName : PipelineInputType.None;
-                    parameter.SupportsPipelineInput |= attribute.ValueFromRemainingArguments ? PipelineInputType.FromRemainingArguments : PipelineInputType.None;
-                    parameterSetNames.AddFirst(attribute.ParameterSetName);
-                }
+                var parameter = GetParameter(cmdletType, property, parameterAttributes, out var parameterSetNames);
                 commandHelp.Parameters.Add(parameter);
 
                 foreach(var name in parameterSetNames)
@@ -180,6 +146,43 @@ namespace PSReptile
             commandHelp.InputTypes.AddRange(GetCmdletInputTypes(cmdletTypeInfo));
 
             return commandHelp;
+        }
+
+        Parameter GetParameter(Type cmdletType, PropertyInfo property, IEnumerable<ParameterAttribute> parameterAttributes, out IList<string> parameterSetNames)
+        {
+            var parameter = new Parameter
+            {
+                Name = property.Name,
+                Aliases = string.Join(", ", property.GetCustomAttribute<AliasAttribute>()?.AliasNames ?? new List<string> { "none" }),
+                Description = GetParameterDescription(property),
+                Value =
+                {
+                    IsMandatory = property.PropertyType != typeof(SwitchParameter),
+                    DataType = PowerShellIfyTypeName(property.PropertyType),
+                },
+                SupportsGlobbing = property.GetCustomAttribute<SupportsWildcardsAttribute>() != null
+            };
+
+            var defaultValue = GetParameterDefaultValue(cmdletType, property);
+            if(defaultValue != null)
+                parameter.DefaultValue = defaultValue;
+            
+            var lastAttribute = parameterAttributes.Last();
+            if(lastAttribute.Position != int.MinValue)
+                parameter.Position = lastAttribute.Position.ToString();
+            
+            var parameterSetList = new LinkedList<string>();
+            foreach(var attribute in parameterAttributes)
+            {
+                parameter.IsMandatory = parameter.IsMandatory || attribute.Mandatory;
+                parameter.SupportsPipelineInput |= attribute.ValueFromPipeline ? PipelineInputType.ByValue : PipelineInputType.None;
+                parameter.SupportsPipelineInput |= attribute.ValueFromPipelineByPropertyName ? PipelineInputType.ByPropertyName : PipelineInputType.None;
+                parameter.SupportsPipelineInput |= attribute.ValueFromRemainingArguments ? PipelineInputType.FromRemainingArguments : PipelineInputType.None;
+                parameterSetList.AddFirst(attribute.ParameterSetName);
+            }
+            parameterSetNames = parameterSetList.ToList();
+
+            return parameter;
         }
 
         /// <summary>
@@ -256,7 +259,7 @@ namespace PSReptile
 
         string GetParameterDefaultValue(Type cmdletType, PropertyInfo propertyInfo)
         {
-            var temp = cmdletType.GetConstructors(BindingFlags.Public)?.FirstOrDefault()?.Invoke(new object[0]) ?? null;
+            var temp = cmdletType.GetConstructor(new Type[0])?.Invoke(new object[0]) ?? null;
             if(temp is null)
                 return null;
             

@@ -25,8 +25,16 @@ namespace PSReptile.SampleModule
         /// <summary>
         ///     The title of the person to greet, without a period after it.
         /// </summary>
+        [Alias("Honorific")]
         [Parameter(ValueFromRemainingArguments = true, ValueFromPipelineByPropertyName = true, HelpMessage = "Title of the person to greet, sans period.")]
         public string Title { get; set; }
+
+        /// <summary>
+        ///     The greeting to use.
+        /// </summary>
+        [Parameter(ValueFromPipeline = true, HelpMessage = "The greeting to use.")]
+        [Parameter(Mandatory=true, Position=0, ValueFromPipeline = true, HelpMessage = "The last greeting to use.", ParameterSetName="Other")]
+        public string Greeting { get; set; } = "Hello";
 
         /// <summary>
         ///     Perform Cmdlet processing.
@@ -34,9 +42,9 @@ namespace PSReptile.SampleModule
         protected override void ProcessRecord()
         {
             if(string.IsNullOrEmpty(Title))
-                WriteObject($"Hello, {Name}!");
+                WriteObject($"{Greeting}, {Name}!");
             else
-                WriteObject($"Hello, {Title} {Name}!");
+                WriteObject($"{Greeting}, {Title} {Name}!");
         }
     }
 }

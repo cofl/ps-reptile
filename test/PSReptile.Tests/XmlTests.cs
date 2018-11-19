@@ -65,13 +65,48 @@ namespace PSReptile.Tests
         <command:parameterValue required=""true"" variableLength=""false"">String</command:parameterValue>
         <dev:defaultValue>None</dev:defaultValue>
       </command:parameter>
-      <command:parameter required=""false"" variableLength=""true"" globbing=""false"" pipelineInput=""true (ByPropertyName, FromRemainingArguments)"" position=""named"" aliases=""none"">
+      <command:parameter required=""false"" variableLength=""true"" globbing=""false"" pipelineInput=""true (ByPropertyName, FromRemainingArguments)"" position=""named"" aliases=""Honorific"">
         <maml:name>Title</maml:name>
         <maml:description>
           <maml:para>Title of the person to greet, sans period.</maml:para>
         </maml:description>
         <command:parameterValue required=""true"" variableLength=""false"">String</command:parameterValue>
         <dev:defaultValue>None</dev:defaultValue>
+      </command:parameter>
+      <command:parameter required=""true"" variableLength=""true"" globbing=""false"" pipelineInput=""true (ByValue)"" position=""named"" aliases=""none"">
+        <maml:name>Greeting</maml:name>
+        <maml:description>
+          <maml:para>The last greeting to use.</maml:para>
+        </maml:description>
+        <command:parameterValue required=""true"" variableLength=""false"">String</command:parameterValue>
+        <dev:defaultValue>Hello</dev:defaultValue>
+      </command:parameter>
+    </command:syntaxItem>
+    <command:syntaxItem>
+      <maml:name>Get-Greeting</maml:name>
+      <command:parameter required=""true"" variableLength=""true"" globbing=""false"" pipelineInput=""false"" position=""named"" aliases=""none"">
+        <maml:name>Name</maml:name>
+        <maml:description>
+          <maml:para>The name of the person to greet</maml:para>
+        </maml:description>
+        <command:parameterValue required=""true"" variableLength=""false"">String</command:parameterValue>
+        <dev:defaultValue>None</dev:defaultValue>
+      </command:parameter>
+      <command:parameter required=""false"" variableLength=""true"" globbing=""false"" pipelineInput=""true (ByPropertyName, FromRemainingArguments)"" position=""named"" aliases=""Honorific"">
+        <maml:name>Title</maml:name>
+        <maml:description>
+          <maml:para>Title of the person to greet, sans period.</maml:para>
+        </maml:description>
+        <command:parameterValue required=""true"" variableLength=""false"">String</command:parameterValue>
+        <dev:defaultValue>None</dev:defaultValue>
+      </command:parameter>
+      <command:parameter required=""true"" variableLength=""true"" globbing=""false"" pipelineInput=""true (ByValue)"" position=""named"" aliases=""none"">
+        <maml:name>Greeting</maml:name>
+        <maml:description>
+          <maml:para>The last greeting to use.</maml:para>
+        </maml:description>
+        <command:parameterValue required=""true"" variableLength=""false"">String</command:parameterValue>
+        <dev:defaultValue>Hello</dev:defaultValue>
       </command:parameter>
     </command:syntaxItem>
   </command:syntax>
@@ -84,13 +119,21 @@ namespace PSReptile.Tests
       <command:parameterValue required=""true"" variableLength=""false"">String</command:parameterValue>
       <dev:defaultValue>None</dev:defaultValue>
     </command:parameter>
-    <command:parameter required=""false"" variableLength=""true"" globbing=""false"" pipelineInput=""true (ByPropertyName, FromRemainingArguments)"" position=""named"" aliases=""none"">
+    <command:parameter required=""false"" variableLength=""true"" globbing=""false"" pipelineInput=""true (ByPropertyName, FromRemainingArguments)"" position=""named"" aliases=""Honorific"">
       <maml:name>Title</maml:name>
       <maml:description>
         <maml:para>Title of the person to greet, sans period.</maml:para>
       </maml:description>
       <command:parameterValue required=""true"" variableLength=""false"">String</command:parameterValue>
       <dev:defaultValue>None</dev:defaultValue>
+    </command:parameter>
+    <command:parameter required=""true"" variableLength=""true"" globbing=""false"" pipelineInput=""true (ByValue)"" position=""named"" aliases=""none"">
+      <maml:name>Greeting</maml:name>
+      <maml:description>
+        <maml:para>The last greeting to use.</maml:para>
+      </maml:description>
+      <command:parameterValue required=""true"" variableLength=""false"">String</command:parameterValue>
+      <dev:defaultValue>Hello</dev:defaultValue>
     </command:parameter>
   </command:parameters>
   <command:inputTypes />
@@ -113,6 +156,11 @@ namespace PSReptile.Tests
                 writer.Flush();
 
                 actual = writer.ToString();
+            }
+            using(var k = new StreamWriter(@"C:\BHK\out.txt"))
+            {
+                k.Write(actual);
+                k.Flush();
             }
             
             Assert.Equal(expected, actual);
